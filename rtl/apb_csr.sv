@@ -17,11 +17,13 @@ module apb_csr (
 
     output logic [1:0]  op,
     output logic        start,
+    output logic        flush,
 
     input  logic        done_i,
     input  logic        busy_i,
     input  logic        overflow_i,
-    input  logic        singular_i
+    input  logic        singular_i,
+    input  logic        rx_err_i
 );
 
     assign pready = 1'b1;
@@ -32,8 +34,8 @@ module apb_csr (
         end
         if (psel && penable && pwrite) begin
             case (paddr)
-                8'h00 :  op    <= pwdata;
-                8'h04 :  start <= pwdata;
+                8'h00 : if (~busy_i) op <= pwdata;
+                8'h04 : {flush, start}  <= pwdata;
                 default: pslverr  <= 1'b1;
             endcase
         end
@@ -47,7 +49,7 @@ module apb_csr (
             case (paddr)
                 8'h00 :  prdata  <= op;
                 8'h04 :  prdata  <= start;
-                8'h08 :  prdata  <= { singular_i, overflow_i, busy_i, done_i };
+                8'h08 :  prdata  <= {rx_err_i, singular_i, overflow_i, busy_i, done_i};
                 default: pslverr <= 1'b1;
             endcase
         end

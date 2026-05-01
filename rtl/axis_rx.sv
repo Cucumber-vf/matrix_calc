@@ -51,6 +51,8 @@ module axis_rx #(
             if(col_cnt == N - 1) begin
                 col_cnt <= '0;
                 row_cnt <= row_cnt + 1;
+            end else begin
+                col_cnt <= col_cnt + 1;
             end
         end
     end
@@ -82,7 +84,7 @@ module axis_rx #(
             mat [row_cnt][col_cnt] <= s_tdata;
     end
 
-    assign s_tready  = (state == IDLE);
+    assign s_tready  = (state == IDLE) && (next_sate == IDLE);
     assign recv_done = (state == BUSY);
     assign rx_err    = (state == RX_ERR);
 
