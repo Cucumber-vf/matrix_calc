@@ -54,6 +54,7 @@ module matrix_calc #(
     logic [DATA_W-1:0]      det;
     logic                   det_overflow;
     logic                   det_singular;
+    logic                   calc_done;
 
     logic                   send;
     logic                   is_scalar;
@@ -138,12 +139,13 @@ module matrix_calc #(
         .N        (N),
         .DATA_W   (DATA_W)
     ) u_mat_det (
-        .clk      (clk         ),
-        .rst_n    (rst_n       ),
-        .mat_a    (mat_a       ),
-        .det      (det         ),
-        .overflow (det_overflow),
-        .singular (det_singular)
+        .clk       (clk         ),
+        .rst_n     (rst_n       ),
+        .mat_a     (mat_a       ),
+        .det       (det         ),
+        .overflow  (det_overflow),
+        .singular  (det_singular),
+        .calc_done (calc_done   )
     );
 
     axis_tx #(
