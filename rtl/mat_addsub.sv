@@ -1,40 +1,32 @@
 module mat_addsub #(
-    parameter N      = 4
+    parameter N = 4,
     parameter DATA_W = 16
 ) (
-    input  logic                       op,
+    input  logic signed [DATA_W-1:0] mat_a [N][N],
+    input  logic signed [DATA_W-1:0] mat_b [N][N],
+    input  logic                     sub,
     
-    input  logic signed [DATA_W-1:0]   mat_a   [N][N],
-    input  logic signed [DATA_W-1:0]   mat_b   [N][N],
-    
-    output logic signed [DATA_W-1:0]   mat_res [N][N],
-    output logic                       overflow
+    output logic signed [DATA_W-1:0] mat_c [N][N],
+    output logic                     overflow
 );
+    logic signed [DATA_W:0] result_ext [N][N];
+    logic [N-1:0][N-1:0] elem_overflow;
 
-    logic signed [DATA_W:0] sum_ext; 
-    logic overflow_comb [N][N];
-    
-    genvar i, j;
+    genvar r, c;
     generate
-        for (i = 0; i < N; i++) begin : gen_row
-            for (j = 0; j < N; j++) begin : gen_col
-                if (op) begin
-                    assign sum_ext = mat_a[i][j] - mat_b[i][j];
-                    assign mat_res[i][j] = sum_ext[DATA_W-1:0];
+        for (r = 0; r < N; r++) begin : gen_row
+            for (c = 0; c < N; c++) begin : gen_col
+                assign result_ext[r][c] = sub
+                    ? (mat_a[r][c] - mat_b[r][c])
+                    : (mat_a[r][c] + mat_b[r][c]);
 
-                    assign overflow_comb[i][j] = (mat_a[i][j][DATA_W-1] != mat_b[i][j][DATA_W-1]) &&
-                                                 (mat_b[i][j][DATA_W-1] == mat_res[i][j][DATA_W-1]);
-                end else begin
-                    assign sum_ext = mat_a[i][j] + mat_b[i][j];
-                    assign mat_res[i][j] = sum_ext[DATA_W-1:0];
-                    
-                    assign overflow_comb[i][j] = (mat_a[i][j][DATA_W-1] == mat_b[i][j][DATA_W-1]) &&
-                                                 (mat_a[i][j][DATA_W-1] != mat_res[i][j][DATA_W-1]);
-                end
+                assign elem_overflow[r][c] = 
+                    result_ext[r][c][DATA_W] != result_ext[r][c][DATA_W-1];
+
+                assign mat_c[r][c] = result_ext[r][c][DATA_W-1:0];
             end
         end
     endgenerate
-    
-    assign overflow = |overflow_comb;
-            
+
+    assign overflow = |elem_overflow;
 endmodule
