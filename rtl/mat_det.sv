@@ -6,7 +6,7 @@ module mat_det #(
     input  logic                         rst_n,
     input  logic signed [DATA_W-1:0]     mat_a [N][N],
     input  logic                         start,
-    output logic signed [DATA_W-1:0]     det,
+    output logic signed [N*DATA_W-1:0]   det,
     output logic                         singular,
     output logic                         overflow,
     output logic                         calc_done
@@ -140,7 +140,7 @@ module mat_det #(
                         det <= 0;
                     end
                     else begin
-                        det <= result[DATA_W-1:0];
+                        det <= result;
 
                         if (result[DATA_W-1] == 1'b0)
                             overflow <= |result[INTERNAL_W-1:DATA_W];
