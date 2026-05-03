@@ -24,7 +24,7 @@ module mat_det #(
         COPY,
         PIVOT_SEARCH,
         ELIMINATE,
-        COMPUTE_DET,
+        COMPUTE_DET
     } state_t;
 
     state_t state, next_state;
@@ -33,7 +33,7 @@ module mat_det #(
     logic signed [INTERNAL_W-1:0] pivot;
     logic signed [INTERNAL_W-1:0] prev_pivot;
 
-    logic signed [INTERNAL_W-1:0] tmp_val; //для свапа строк
+    logic signed [INTERNAL_W-1:0] tmp_val;
     logic signed [INTERNAL_W  :0] elim_result;
 
     logic [IDX_W-1:0] k, i, j, swap_row;
@@ -49,10 +49,10 @@ module mat_det #(
         overflow_flag = 0;
 
         if (state == ELIMINATE) begin
-            // Формула Барейсса
+            // Bareiss's formula
             elim_result = (pivot * m[i][j] - m[i][k] * m[k][j]) / prev_pivot;
 
-            if (|(elim_result[INTERNAL_W : INTERNAL_W-1] ^ {2{elim_result[INTERNAL_W-1]}});)
+            if (|(elim_result[INTERNAL_W : INTERNAL_W-1] ^ {2{elim_result[INTERNAL_W-1]}}))
                 overflow_flag = 1;
         end
     end
@@ -84,17 +84,17 @@ module mat_det #(
                 next_state = PIVOT_SEARCH;
             PIVOT_SEARCH:
                 if ((pivot_is_zero && !found) || overflow_flag)
-                    next_state = COMPUTE;
+                    next_state = COMPUTE_DET;
                 else
                     next_state = ELIMINATE;
             ELIMINATE:
                 if (busy_inner)
                     next_state = ELIMINATE; 
                 else if (k == N-1)
-                    next_state = COMPUTE;
+                    next_state = COMPUTE_DET;
                 else
                     next_state = PIVOT_SEARCH;
-            COMPUTE:
+            COMPUTE_DET:
                 next_state = IDLE;
             default:
                 next_state = IDLE;
@@ -113,7 +113,6 @@ module mat_det #(
             k          <= 0;
             i          <= 0;
             j          <= 0;
-            swap_row   <= 0;
             busy_inner <= 0;
             pivot      <= 0;
             prev_pivot <= 1;

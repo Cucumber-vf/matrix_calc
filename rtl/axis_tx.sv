@@ -2,18 +2,15 @@ module axis_tx #(
     parameter N      = 4,
     parameter DATA_W = 16
 ) (
-    //
     input  logic                       clk,
     input  logic                       rst_n,
 
-    //
     input  logic                       send,
     input  logic                       is_scalar,
 
     input  logic signed [  DATA_W-1:0] mat_in [N][N],
     input  logic signed [N*DATA_W-1:0] scalar_in,
     
-    //
     output logic signed [  DATA_W-1:0] m_tdata,
     output logic                       m_tvalid,
     output logic                       m_tlast,
@@ -72,33 +69,33 @@ module axis_tx #(
             state <= next_state;
 
     always_comb begin
-        next_state = state
+        next_state = state;
 
         case (state)
             IDLE: 
                 if (send) next_state = SEND;
             SEND: 
-                if (m_tvalid && m_tready && m_tlast) next_state == IDLE;
+                if (m_tvalid && m_tready && m_tlast) next_state = IDLE;
         endcase
     end
 
     always_ff @(posedge clk) begin
         if (m_tvalid && m_tready)
             if(is_scalar) begin
-                m_tdata <= scalar_in[(sc_part_cnt + 1)*DATA_W - 1 : sc_part_cnt*DATA_W];
+                m_tdata <= scalar_in[sc_part_cnt * DATA_W +: DATA_W];
                 if (sc_part_cnt == N - 1) begin
                     m_tlast <= 1'b1;
                 end
             end
             else if (cnt == TOTAL - 1) begin
-                m_tdata <= mat [row_cnt][col_cnt];
+                m_tdata <= mat_in [row_cnt][col_cnt];
                 m_tlast <= 1'b1;
             end
             else begin
-                m_tdata <= mat [row_cnt][col_cnt];
+                m_tdata <= mat_in [row_cnt][col_cnt];
             end
     end
 
-    assign m_tvalid  = (state == SEND) && (next_sate == SEND);
+    assign m_tvalid  = (state == SEND) && (next_state == SEND);
 
 endmodule
