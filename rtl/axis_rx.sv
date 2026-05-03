@@ -38,15 +38,15 @@ module axis_rx #(
     logic [W_CNT         - 1:0] cnt;
 
     always_ff @(posedge clk) begin
-        if(~rst_n) begin
+        if (~rst_n) begin
             cnt     <= '0;
             row_cnt <= '0;
             col_cnt <= '0;
-        end else if(flush) begin
+        end else if (flush) begin
             cnt     <= '0;
             row_cnt <= '0;
             col_cnt <= '0;
-        end else if(s_tvalid && s_tready) begin
+        end else if (s_tvalid && s_tready) begin
             cnt <= cnt + 1;
             if(col_cnt == N - 1) begin
                 col_cnt <= '0;
@@ -58,7 +58,7 @@ module axis_rx #(
     end
 
     always_ff @(posedge clk)
-        if(~rst_n)
+        if (~rst_n)
             state <= IDLE;
         else
             state <= next_state;
@@ -68,14 +68,14 @@ module axis_rx #(
 
         case(state)
             IDLE: 
-                if(s_tvalid && s_tready && s_tlast && (cnt == TOTAl - 1)) 
+                if (s_tvalid && s_tready && s_tlast && (cnt == TOTAl - 1)) 
                     next_state = BUSY;
-                else if(s_tvalid && s_tready && s_tlast && (cnt != TOTAl - 1)) 
+                else if (s_tvalid && s_tready && s_tlast && (cnt != TOTAl - 1)) 
                     next_state = RX_ERR;
             BUSY: 
-                if(flush) next_state == IDLE;
+                if (flush) next_state == IDLE;
             RX_ERR:
-                if(flush) next_state == IDLE;
+                if (flush) next_state == IDLE;
         endcase
     end
 

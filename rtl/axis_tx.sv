@@ -41,22 +41,22 @@ module axis_tx #(
     logic [W_SC_PART_CNT - 1:0] sc_part_cnt;
 
     always_ff @(posedge clk) begin
-        if(~rst_n) begin
+        if (~rst_n) begin
             cnt         <= '0;
             row_cnt     <= '0;
             col_cnt     <= '0;
             sc_part_cnt <= '0;
         end 
-        else if(state == IDLE) begin  
+        else if (state == IDLE) begin  
             cnt         <= '0;
             row_cnt     <= '0;
             col_cnt     <= '0;
             sc_part_cnt <= '0;
         end 
-        else if(m_tvalid && m_tready) begin
+        else if (m_tvalid && m_tready) begin
             cnt         <= cnt + 1;
             sc_part_cnt <= sc_part_cnt + 1;
-            if(col_cnt == N - 1) begin
+            if (col_cnt == N - 1) begin
                 col_cnt <= '0;
                 row_cnt <= row_cnt + 1;
             end else begin
@@ -66,7 +66,7 @@ module axis_tx #(
     end
     
     always_ff @(posedge clk)
-        if(~rst_n)
+        if (~rst_n)
             state <= IDLE;
         else
             state <= next_state;
@@ -74,23 +74,23 @@ module axis_tx #(
     always_comb begin
         next_state = state
 
-        case(state)
+        case (state)
             IDLE: 
-                if(send) next_state = SEND;
+                if (send) next_state = SEND;
             SEND: 
-                if(m_tvalid && m_tready && m_tlast) next_state == IDLE;
+                if (m_tvalid && m_tready && m_tlast) next_state == IDLE;
         endcase
     end
 
     always_ff @(posedge clk) begin
-        if(m_tvalid && m_tready)
+        if (m_tvalid && m_tready)
             if(is_scalar) begin
                 m_tdata <= scalar_in[(sc_part_cnt + 1)*DATA_W - 1 : sc_part_cnt*DATA_W];
                 if (sc_part_cnt == N - 1) begin
                     m_tlast <= 1'b1;
                 end
             end
-            else if(cnt == TOTAL - 1) begin
+            else if (cnt == TOTAL - 1) begin
                 m_tdata <= mat [row_cnt][col_cnt];
                 m_tlast <= 1'b1;
             end

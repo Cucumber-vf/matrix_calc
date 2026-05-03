@@ -1,23 +1,30 @@
 module mat_det #(
-    parameter N = 4,
-    parameter DATA_W = 16
+    parameter int N = 4,
+    parameter int DATA_W = 16
 ) (
-    input  logic                         clk,
-    input  logic                         rst_n,
-    input  logic signed [DATA_W-1:0]     mat_a [N][N],
-    input  logic                         start,
-    output logic signed [N*DATA_W-1:0]   det,
-    output logic                         singular,
-    output logic                         overflow,
-    output logic                         calc_done
-);
-    localparam INTERNAL_W = N * DATA_W;
+    //
+    input  logic                       clk,
+    input  logic                       rst_n,
 
-    typedef enum logic [1:0] {
+    //
+    input  logic signed [  DATA_W-1:0] mat_a [N][N],
+    input  logic                       start,
+
+    output logic signed [N*DATA_W-1:0] det,
+    output logic                       singular,
+    output logic                       overflow,
+    output logic                       calc_done
+);
+
+    localparam int INTERNAL_W = N * DATA_W;
+    localparam int IDX_W      = $clog2(N);
+
+    typedef enum logic [2:0] {
         IDLE,
         COPY,
+        PIVOT_SEARCH,
         ELIMINATE,
-        COMPUTE_DET
+        COMPUTE_DET,
     } state_t;
 
     state_t state, next_state;
@@ -25,56 +32,115 @@ module mat_det #(
     logic signed [INTERNAL_W-1:0] m [N][N];
     logic signed [INTERNAL_W-1:0] pivot;
     logic signed [INTERNAL_W-1:0] prev_pivot;
-    logic        [$clog2(N)-1 :0] k;
-    logic        [$clog2(N)-1 :0] i;
-    logic        [$clog2(N)-1 :0] j;
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    logic signed [INTERNAL_W-1:0] tmp_val; //для свапа строк
+    logic signed [INTERNAL_W  :0] elim_result;
+
+    logic [IDX_W-1:0] k, i, j, swap_row;
+    logic             busy_inner;
+    logic             sign_neg;
+    logic             overflow_flag;
+
+    logic             found;
+    logic             pivot_is_zero;
+
+    always_comb begin
+        elim_result   = 0;
+        overflow_flag = 0;
+
+        if (state == ELIMINATE) begin
+            // Формула Барейсса
+            elim_result = (pivot * m[i][j] - m[i][k] * m[k][j]) / prev_pivot;
+
+            if (|(elim_result[INTERNAL_W : INTERNAL_W-1] ^ {2{elim_result[INTERNAL_W-1]}});)
+                overflow_flag = 1;
+        end
+    end
+
+    always_comb begin
+        found         = 0;
+        pivot_is_zero = 0;
+        swap_row      = k;
+
+        if (state == PIVOT_SEARCH) begin
+            if (m[k][k] == 0) begin
+                pivot_is_zero = 1;
+                for (int r = k + 1; r < N; r++) begin
+                    if (m[r][k] != 0 && !found) begin
+                        swap_row = r;
+                        found    = 1;
+                    end
+                end
+            end
+        end
+    end
+
+    always_comb begin
+        next_state = state;
+        case (state)
+            IDLE:
+                if (start) next_state = COPY;
+            COPY:
+                next_state = PIVOT_SEARCH;
+            PIVOT_SEARCH:
+                if ((pivot_is_zero && !found) || overflow_flag)
+                    next_state = COMPUTE;
+                else
+                    next_state = ELIMINATE;
+            ELIMINATE:
+                if (busy_inner)
+                    next_state = ELIMINATE; 
+                else if (k == N-1)
+                    next_state = COMPUTE;
+                else
+                    next_state = PIVOT_SEARCH;
+            COMPUTE:
+                next_state = IDLE;
+            default:
+                next_state = IDLE;
+        endcase
+    end
+
+    always_ff @(posedge clk) begin
         if (!rst_n)
             state <= IDLE;
         else
             state <= next_state;
     end
 
-    always_comb begin
-        next_state = state;
-        case (state)
-            IDLE:         if (start) next_state = COPY;
-            COPY:         next_state = ELIMINATE;
-            ELIMINATE:    if (k == N-1) next_state = COMPUTE_DET;
-            COMPUTE_DET:  next_state = IDLE;
-            default:      next_state = IDLE;
-        endcase
-    end
-
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             k          <= 0;
             i          <= 0;
             j          <= 0;
+            swap_row   <= 0;
+            busy_inner <= 0;
             pivot      <= 0;
-            prev_pivot <= 0;
-            done       <= 0;
-            det        <= 0;
+            prev_pivot <= 1;
+            sign_neg   <= 0;
+
             singular   <= 0;
             overflow   <= 0;
+            calc_done  <= 0;
+            det        <= 0;
 
             for (int r = 0; r < N; r++)
                 for (int c = 0; c < N; c++)
                     m[r][c] <= 0;
         end
         else begin
+
             case (state)
                 IDLE: begin
-                    done     <= 0;
-                    det      <= 0;
-                    singular <= 0;
-                    overflow <= 0;
-                    k        <= 0;
-                    i        <= 0;
-                    j        <= 0;
+                    calc_done  <= 0;
                     if (start) begin
+                        k          <= 0;
                         prev_pivot <= 1;
+                        sign_neg   <= 0;
+
+                        singular   <= 0;
+                        overflow   <= 0;
+                        det        <= 0;
                     end
                 end
 
@@ -84,73 +150,62 @@ module mat_det #(
                             m[r][c] <= mat_a[r][c];
                 end
 
+                PIVOT_SEARCH: begin
+                    if (pivot_is_zero && !found) begin
+                        singular <= 1;
+                    end
+                    else begin
+                        i            <= k + 1;
+                        j            <= k + 1;
+                        busy_inner   <= 1;
+
+                        if (found) begin
+                            sign_neg <= ~sign_neg;
+                            for (int c = 0; c < N; c++) begin
+                                tmp_val        <= m[k][c];
+                                m[k][c]        <= m[swap_row][c];
+                                m[swap_row][c] <= tmp_val;
+                            end
+                        end
+                        
+                        pivot <= m[k][k];
+                    end
+                end
+
                 ELIMINATE: begin
-                    if (k == 0 && i == 0 && j == 0) begin
-                        pivot <= m[0][0];
-                    end
+                        m[i][j] <= elim_result[INTERNAL_W-1:0];
+                        
+                        if(overflow_flag) overflow <= 1;
 
-                    if (m[k][k] == 0) begin
-                        logic found;
-                        found = 0;
-                        for (int r = k+1; r < N; r++) begin
-                            if (m[r][k] != 0 && !found) begin
-                                for (int c = 0; c < N; c++) begin
-                                    m[k][c] <= m[r][c];
-                                    m[r][c] <= m[k][c];
-                                end
-                                found = 1;
-                            end
-                        end
-                        if (!found) begin
-                            singular <= 1;
-                        end
-                    end
-
-                    if (i < N && j < N) begin
-                        if (i > k && j > k) begin
-                            m[i][j] <= (pivot * m[i][j] - m[i][k] * m[k][j]) / prev_pivot;
-                        end
-
-                        if (j == N-1) begin
-                            j <= 0;
-                            if (i == N-1) begin
-                                i <= k + 2;
-                                j <= k + 2;
+                        if (j == N - 1) begin
+                            j <= k + 1;
+                            if (i == N - 1) begin
                                 k <= k + 1;
-                                if (k + 1 < N) begin
-                                    pivot      <= m[k+1][k+1];
-                                    prev_pivot <= pivot;
-                                end
+
+                                busy_inner <= 0;
+                                prev_pivot <= pivot;
                             end
-                            else begin
+                            else
                                 i <= i + 1;
-                            end
                         end
                         else begin
                             j <= j + 1;
                         end
                     end
-                end
 
                 COMPUTE_DET: begin
-                    logic signed [INTERNAL_W-1:0] result;
-                    result = m[N-1][N-1];
-
-                    if (singular) begin
-                        det <= 0;
-                    end
-                    else begin
-                        det <= result;
-
-                        if (result[DATA_W-1] == 1'b0)
-                            overflow <= |result[INTERNAL_W-1:DATA_W];
-                        else
-                            overflow <= ~(&result[INTERNAL_W-1:DATA_W]);
-                    end
-
+                    if (singular)
+                        det <= '0;
+                    else if (overflow)
+                        det <= '1;
+                    else
+                        det <= sign_neg ? -m[N-1][N-1] : m[N-1][N-1];
+                    
                     calc_done <= 1;
                 end
+
             endcase
         end
     end
+
 endmodule
