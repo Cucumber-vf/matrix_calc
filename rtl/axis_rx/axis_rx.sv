@@ -23,9 +23,9 @@ module axis_rx #(
     localparam W_CNT         = $clog2(TOTAL);
  
     typedef enum logic [1:0] {
-        IDLE   = 2'b00,
-        BUSY   = 2'b01,
-        RX_ERR = 2'b10
+        IDLE,
+        BUSY,
+        RX_ERR
     } state_t;
 
     state_t state, next_state;
@@ -63,11 +63,11 @@ module axis_rx #(
         next_state = state;
 
         case(state)
-            IDLE: 
-                if (s_tvalid && s_tready && s_tlast && (cnt == TOTAL - 1)) 
-                    next_state = BUSY;
-                else if (s_tvalid && s_tready && s_tlast && (cnt != TOTAL - 1)) 
-                    next_state = RX_ERR;
+            IDLE:
+                if (s_tvalid && s_tlast) begin
+                    if (cnt == TOTAL - 1) next_state = BUSY;
+                    else                  next_state = RX_ERR;
+                end
             BUSY: 
                 if (flush) next_state = IDLE;
             RX_ERR:
@@ -80,8 +80,16 @@ module axis_rx #(
             mat [row_cnt][col_cnt] <= s_tdata;
     end
 
-    assign s_tready  = (state == IDLE) && (next_state == IDLE);
-    assign recv_done = (state == BUSY);
-    assign rx_err    = (state == RX_ERR);
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
+            s_tready  <= 0;
+            recv_done <= 0;
+            rx_err    <= 0;
+        end else begin
+            s_tready  <= (next_state == IDLE);
+            recv_done <= (next_state == BUSY);
+            rx_err    <= (next_state == RX_ERR);
+        end
+    end
 
 endmodule

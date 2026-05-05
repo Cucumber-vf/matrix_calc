@@ -67,12 +67,7 @@ module matrix_calc #(
     assign res_mat  = op[1] ? mat_transpose_res : mat_addsub_res;
 
     always_ff @(posedge clk) begin
-        if (~rst_n) begin
-            done_i     <= 0;
-            overflow_i <= 0;
-            singular_i <= 0;
-        end
-        else if (start) begin
+        if (start) begin
             done_i     <= 0;
             overflow_i <= 0;
             singular_i <= 0;
@@ -115,7 +110,7 @@ module matrix_calc #(
             IDLE: 
                 if (s_axis_a_tready & s_axis_b_tready)     next_state = RECV;
             RECV: 
-                if (recv_a_done || (~op[1] & recv_b_done)) next_state = WAIT_START;
+                if (recv_a_done && (op[1] | recv_b_done))  next_state = WAIT_START;
                 else if (rx_err_i)                         next_state = RX_ERR;
                 else if (flush)                            next_state = IDLE;
             WAIT_START:
@@ -124,18 +119,14 @@ module matrix_calc #(
                 if (calc_done || (op != 2'b11))            next_state = SEND;
             SEND:
                 if (m_axis_res_tvalid && m_axis_res_tready
-                                      && m_axis_res_tlast) next_state = DONE_WAIT;
-            DONE_WAIT:
-                if (psel && penable 
-                         && ~pwrite && paddr == 8'h08)     next_state = DONE_WAIT;
+                                      && m_axis_res_tlast) next_state = IDLE;
             RX_ERR:
                 if (flush)                                 next_state = IDLE;
         endcase
     end
     
-    assign flush_a = (state == IDLE);
-    assign flush_b = (state == IDLE);
-    assign send    = (state == SEND);
+    assign flush_rx = (state == IDLE);
+    assign send     = (state == SEND);
     assign set_calc_status = (state == SEND) && (op != 2'b10);
 
    ////////////////////////////////////////////////////////
@@ -170,7 +161,7 @@ module matrix_calc #(
         .s_tvalid  (s_axis_a_tvalid),
         .s_tlast   (s_axis_a_tlast ),
         .s_tready  (s_axis_a_tready),
-        .flush     (flush_a        ),
+        .flush     (flush_rx       ),
         .mat       (mat_a          ),
         .recv_done (recv_a_done    ),
         .rx_err    (rx_err_a       )
@@ -186,7 +177,7 @@ module matrix_calc #(
         .s_tvalid  (s_axis_b_tvalid),
         .s_tlast   (s_axis_b_tlast ),
         .s_tready  (s_axis_b_tready),
-        .flush     (flush_b        ),
+        .flush     (flush_rx       ),
         .mat       (mat_b          ),
         .recv_done (recv_b_done    ),
         .rx_err    (rx_err_b       )

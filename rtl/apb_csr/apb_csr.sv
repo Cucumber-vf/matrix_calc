@@ -28,12 +28,14 @@ module apb_csr (
     
     always_ff @(posedge clk) begin
         if (~rst_n) begin
-            op <= 2'b00;
+            op    <= 2'b00;
+            start <= 1'b0;
+            flush <= 1'b0;
         end
         if (psel && penable && pwrite) begin
             case (paddr)
-                8'h00 : if (~busy_i) op <= pwdata;
-                8'h04 : {flush, start}  <= pwdata;
+                8'h00 : if (~busy_i) op <= pwdata[1:0];
+                8'h04 : {flush, start}  <= pwdata[1:0];
             endcase
         end
         else begin
@@ -45,12 +47,14 @@ module apb_csr (
     end
 
     always_comb begin
+        prdata = '0;
+
         if (psel && penable && ~pwrite) begin
             case (paddr)
                 8'h00 :  prdata = op;
                 8'h04 :  prdata = start;
                 8'h08 :  prdata = {rx_err_i, singular_i, overflow_i, busy_i, done_i};
-                default: prdata = 1'b0;
+                default: prdata = '0;
             endcase
         end
     end

@@ -131,11 +131,11 @@ module mat_det #(
 
             case (state)
                 IDLE: begin
-                    calc_done  <= 0;
                     if (start) begin
                         k          <= 0;
                         prev_pivot <= 1;
                         sign_neg   <= 0;
+                        calc_done  <= 0;
 
                         singular   <= 0;
                         overflow   <= 0;

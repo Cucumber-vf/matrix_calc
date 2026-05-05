@@ -44,15 +44,17 @@ module axis_tx #(
             col_cnt     <= '0;
             sc_part_cnt <= '0;
         end 
-        else if (state == IDLE) begin  
+        else if (next_state == IDLE) begin  
             cnt         <= '0;
             row_cnt     <= '0;
             col_cnt     <= '0;
             sc_part_cnt <= '0;
         end 
         else if (m_tvalid && m_tready) begin
-            cnt         <= cnt + 1;
-            sc_part_cnt <= sc_part_cnt + 1;
+            cnt <= cnt + 1;
+            if (is_scalar) begin
+                sc_part_cnt <= sc_part_cnt + 1;
+            end
             if (col_cnt == N - 1) begin
                 col_cnt <= '0;
                 row_cnt <= row_cnt + 1;
@@ -83,19 +85,20 @@ module axis_tx #(
         if (m_tvalid && m_tready)
             if(is_scalar) begin
                 m_tdata <= scalar_in[sc_part_cnt * DATA_W +: DATA_W];
-                if (sc_part_cnt == N - 1) begin
-                    m_tlast <= 1'b1;
-                end
-            end
-            else if (cnt == TOTAL - 1) begin
-                m_tdata <= mat_in [row_cnt][col_cnt];
-                m_tlast <= 1'b1;
             end
             else begin
                 m_tdata <= mat_in [row_cnt][col_cnt];
             end
     end
-
-    assign m_tvalid  = (state == SEND) && (next_state == SEND);
+    
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
+            m_tvalid <= 0;
+            m_tlast  <= 0;
+        end else begin
+            m_tvalid <= (next_state == SEND);
+            m_tlast  <= (next_state == SEND) && ((cnt == TOTAL - 1) | (sc_part_cnt == N - 1));
+        end
+    end
 
 endmodule

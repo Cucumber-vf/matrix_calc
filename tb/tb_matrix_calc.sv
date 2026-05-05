@@ -4,9 +4,11 @@ module tb_matrix_calc;
     localparam N      = 4;    
     localparam DATA_W = 16;   
 
-    //
+    //=================================================
+
     logic        clk;
-    logic        rst_n;        
+    logic        rst_n;   
+
     //
     logic        psel;
     logic        penable;
@@ -35,15 +37,19 @@ module tb_matrix_calc;
     logic                     m_axis_res_tlast; 
     logic                     m_axis_res_tready;
 
+    //=================================================
+
     // DUT 
     matrix_calc #( .N(N), .DATA_W(DATA_W) ) dut (
         .*
     );
     
+    //=================================================
 
-    // Drivers
-    apb_driver apb_drv (.*);
+    // Classes
+    //apb_driver  apb_drv (.*); 
 
+    //=================================================
 
     // Clock and Reset gen
     initial begin
@@ -61,31 +67,54 @@ module tb_matrix_calc;
         rst_n <= 1;
     end
 
-    // Direct tests
+    //=================================================
+
     initial begin
+
         
-        // base op check (00)
-        apb_drv.apb_reset();
-
-        // write check
-        apb_drv.apb_write(8'h00, 2'd2);
-        // inv addr write check (pslverr = 1)
-        apb_drv.apb_write(8'h0A, 2'd2);
-        // RO reg write check (pslverr = 1)
-        apb_drv.apb_write(8'h08, 2'd2);
-
-        // write check
-        apb_drv.apb_read(8'h00);
-        // inv addr write check (pslverr = 1)
-        apb_drv.apb_read(8'h10);
-        
-        // self-reset check
-        apb_drv.apb_write(8'h04, 2'd3);
-
-        @(posedge clk);
-        @(posedge clk);
-
-        $stop();
     end
+    
+    /*
+    function void ref_mat_addsub #(
+    parameter N      = 4,
+    parameter DATA_W = 16
+    )(
+        input  signed [DATA_W-1:0] mat_a [N][N],
+        input  signed [DATA_W-1:0] mat_b [N][N],
+        input                      sub,
+        output signed [DATA_W-1:0] mat_c [N][N],
+        output                     overflow
+    );
+    int signed [DATA_W:0] sum;
+    overflow = 1'b0;
+    
+    for (int r = 0; r < N; r++) begin
+        for (int c = 0; c < N; c++) begin
+            if (sub)
+                sum = mat_a[r][c] - mat_b[r][c];
+            else
+                sum = mat_a[r][c] + mat_b[r][c];
 
+            if (sum[DATA_W] != sum[DATA_W-1])
+                overflow = 1'b1;
+            
+            mat_c[r][c] = sum[DATA_W-1:0];
+        end
+    end
+    endfunction
+
+    function void ref_mat_transpose #(
+        parameter N      = 4,
+        parameter DATA_W = 16
+    )(
+        input  signed [DATA_W-1:0] mat_a [N][N],
+        output signed [DATA_W-1:0] mat_c [N][N]
+    );
+        for (int r = 0; r < N; r++) begin
+            for (int c = 0; c < N; c++) begin
+                mat_c[r][c] = mat_a[c][r];
+            end
+        end
+    endfunction
+    */
 endmodule

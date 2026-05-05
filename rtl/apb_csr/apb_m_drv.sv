@@ -1,4 +1,4 @@
-module apb_driver (
+module apb_m_drv (
     //
     input  logic        clk,
     input  logic        rst_n, 
@@ -36,15 +36,18 @@ module apb_driver (
         @(posedge clk);
         penable <= 1;
         do begin
+            if (pslverr)
+            $display("[APB WRITE] WARNING: pslverr asserted for addr=0x%02H data=0x%08H at time %0t",
+                     addr, data, $time);
             @(posedge clk);
         end
-        while(~pready);
+        while (~pready);
         penable <= 0;
         psel    <= 0;
 
     endtask
 
-    task apb_read (input [7:0] addr);
+    task apb_read (input [7:0] addr, output [31:0] rdata);
 
         @(posedge clk);
         penable <= 0;
@@ -54,9 +57,13 @@ module apb_driver (
         @(posedge clk);
         penable <= 1;
         do begin
+            if (pready) rdata = prdata;
+            if (pslverr)
+            $display("[APB READ ] WARNING: pslverr asserted for addr=0x%02X at time %0t",
+                     addr, $time);
             @(posedge clk);
         end
-        while(~pready);
+        while (~pready);
         penable <= 0;
         psel    <= 0;
 
