@@ -22,8 +22,6 @@ module axis_tx #(
 
     localparam TOTAL         = N * N;
     localparam W_CNT         = $clog2(TOTAL);
-
-    localparam W_SC_PART_CNT = $clog2(N);
  
     typedef enum logic {
         IDLE = 1'b0,
@@ -35,36 +33,31 @@ module axis_tx #(
     logic [W_COL_ROW_CNT - 1:0] row_cnt, col_cnt;
     logic [W_CNT         - 1:0] cnt;
 
-    logic [W_SC_PART_CNT - 1:0] sc_part_cnt;
-
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             cnt         <= '0;
             row_cnt     <= '0;
             col_cnt     <= '0;
-            sc_part_cnt <= '0;
         end 
         else if (next_state == IDLE) begin  
             cnt         <= '0;
             row_cnt     <= '0;
             col_cnt     <= '0;
-            sc_part_cnt <= '0;
         end 
-        else if (m_tvalid && m_tready) begin
-            cnt <= cnt + 1;
-            if (is_scalar) begin
-                sc_part_cnt <= sc_part_cnt + 1;
-            end
-            if (col_cnt == N - 1) begin
-                col_cnt <= '0;
-                row_cnt <= row_cnt + 1;
-            end else begin
-                col_cnt <= col_cnt + 1;
+        else if (state == SEND) begin
+            if (m_tvalid && m_tready) begin
+                cnt <= cnt + 1;
+                if (col_cnt == N - 1) begin
+                    col_cnt <= '0;
+                    row_cnt <= row_cnt + 1;
+                end else begin
+                    col_cnt <= col_cnt + 1;
+                end
             end
         end
     end
     
-    always_ff @(posedge clk)
+    always_ff @(posedge clk or negedge rst_n)
         if (~rst_n)
             state <= IDLE;
         else
@@ -81,24 +74,17 @@ module axis_tx #(
         endcase
     end
 
-    always_ff @(posedge clk) begin
-        if (m_tvalid && m_tready)
+    always_comb begin
+        if (state == SEND) begin
             if(is_scalar) begin
-                m_tdata <= scalar_in[sc_part_cnt * DATA_W +: DATA_W];
+                m_tdata = scalar_in[cnt * DATA_W +: DATA_W];
             end
             else begin
-                m_tdata <= mat_in [row_cnt][col_cnt];
+                m_tdata = mat_in [row_cnt][col_cnt];
             end
-    end
-    
-    always_ff @(posedge clk) begin
-        if (~rst_n) begin
-            m_tvalid <= 0;
-            m_tlast  <= 0;
-        end else begin
-            m_tvalid <= (next_state == SEND);
-            m_tlast  <= (next_state == SEND) && ((cnt == TOTAL - 1) | (sc_part_cnt == N - 1));
         end
+        m_tvalid = (state == SEND);
+        m_tlast  = (state == SEND) && ((cnt == TOTAL - 1) || (is_scalar && (cnt == N - 1)));
     end
 
 endmodule

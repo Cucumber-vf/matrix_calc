@@ -38,6 +38,7 @@ module matrix_calc #(
     logic                       overflow_i;
     logic                       singular_i;
     logic                       rx_err_i;
+    
     logic                       set_calc_status;
 
     logic                       flush;
@@ -54,7 +55,6 @@ module matrix_calc #(
     logic signed [  DATA_W-1:0] mat_transpose_res [N][N];
 
     logic signed [N*DATA_W-1:0] det;
-    logic                       det_overflow;
     logic                       det_singular;
     logic                       calc_done;
 
@@ -74,7 +74,7 @@ module matrix_calc #(
         end
         else begin
             if (set_calc_status) begin
-                overflow_i <= (op == 2'b11) ? det_overflow : addsub_overflow;
+                overflow_i <= ~op[1] ? addsub_overflow : 0;
                 singular_i <= det_singular;
             end
             if (m_axis_res_tvalid && m_axis_res_tlast) begin
@@ -211,7 +211,6 @@ module matrix_calc #(
         .mat_a     (mat_a       ),
         .det       (det         ),
         .start     (op && start ),
-        .overflow  (det_overflow),
         .singular  (det_singular),
         .calc_done (calc_done   )
     );

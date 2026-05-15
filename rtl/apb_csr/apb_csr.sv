@@ -1,5 +1,6 @@
+import apb_package::* ;
+
 module apb_csr (
-    
     input  logic        clk,
     input  logic        rst_n, 
      
@@ -23,10 +24,11 @@ module apb_csr (
     input  logic        singular_i,
     input  logic        rx_err_i
 );
-    assign pready  = 1'b1;
-    assign pslverr = psel && penable && ( !(paddr inside {8'h00, 8'h04, 8'h08}) || (pwrite && paddr == 8'h08) );
     
-    always_ff @(posedge clk) begin
+    assign pready  = 1'b1;
+    assign pslverr = psel && penable && ( !(paddr inside {valid_addresses}) || (pwrite && paddr == 8'h08) ); //
+    
+    always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             op    <= 2'b00;
             start <= 1'b0;
@@ -34,8 +36,8 @@ module apb_csr (
         end
         if (psel && penable && pwrite) begin
             case (paddr)
-                8'h00 : if (~busy_i) op <= pwdata[1:0];
-                8'h04 : {flush, start}  <= pwdata[1:0];
+                REG_OP   : if (~busy_i) op <= pwdata[1:0];
+                REG_CTRL : {flush, start}  <= pwdata[1:0];
             endcase
         end
         else begin
@@ -51,9 +53,9 @@ module apb_csr (
 
         if (psel && penable && ~pwrite) begin
             case (paddr)
-                8'h00 :  prdata = op;
-                8'h04 :  prdata = start;
-                8'h08 :  prdata = {rx_err_i, singular_i, overflow_i, busy_i, done_i};
+                REG_OP     :  prdata = op;
+                REG_CTRL   :  prdata = {flush, start};
+                REG_STATUS :  prdata = {rx_err_i, singular_i, overflow_i, busy_i, done_i};
                 default: prdata = '0;
             endcase
         end

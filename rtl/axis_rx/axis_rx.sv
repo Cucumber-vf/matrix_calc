@@ -33,7 +33,7 @@ module axis_rx #(
     logic [W_COL_ROW_CNT - 1:0] row_cnt, col_cnt;
     logic [W_CNT         - 1:0] cnt;
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             cnt     <= '0;
             row_cnt <= '0;
@@ -53,7 +53,7 @@ module axis_rx #(
         end
     end
 
-    always_ff @(posedge clk)
+    always_ff @(posedge clk or negedge rst_n)
         if (~rst_n)
             state <= IDLE;
         else
@@ -80,7 +80,7 @@ module axis_rx #(
             mat [row_cnt][col_cnt] <= s_tdata;
     end
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             s_tready  <= 0;
             recv_done <= 0;
