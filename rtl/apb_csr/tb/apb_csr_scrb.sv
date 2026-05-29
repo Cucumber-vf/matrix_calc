@@ -1,5 +1,3 @@
-import apb_package::* ;
-
 class apb_csr_scrb;
 
     reg_model ref_model; 

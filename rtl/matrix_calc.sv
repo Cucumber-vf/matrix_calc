@@ -33,6 +33,7 @@ module matrix_calc #(
 
     logic [1:0]                 op;
     logic                       start;
+    logic                       flush;
     logic                       done_i;
     logic                       busy_i;
     logic                       overflow_i;
@@ -41,7 +42,7 @@ module matrix_calc #(
     
     logic                       set_calc_status;
 
-    logic                       flush;
+    logic                       flush_rx;
     logic signed [  DATA_W-1:0] mat_a [N][N];
     logic signed [  DATA_W-1:0] mat_b [N][N];
     logic                       recv_a_done;
@@ -65,21 +66,20 @@ module matrix_calc #(
     assign busy_i   = ~s_axis_a_tready || (~op[1] & ~s_axis_b_tready);
     assign rx_err_i = rx_err_a || (~op[1] & rx_err_b);
     assign res_mat  = op[1] ? mat_transpose_res : mat_addsub_res;
+    assign done_i   = m_axis_res_tvalid && m_axis_res_tlast;
 
     always_ff @(posedge clk) begin
-        if (start) begin
-            done_i     <= 0;
+        if (~rst_n) begin
             overflow_i <= 0;
             singular_i <= 0;
         end
-        else begin
-            if (set_calc_status) begin
-                overflow_i <= ~op[1] ? addsub_overflow : 0;
-                singular_i <= det_singular;
-            end
-            if (m_axis_res_tvalid && m_axis_res_tlast) begin
-                done_i <= 1;
-            end
+        else if (flush_rx) begin
+            overflow_i <= 0;
+            singular_i <= 0;
+        end
+        else if (set_calc_status) begin
+            overflow_i <= ~op[1] ? addsub_overflow : 0;
+            singular_i <= det_singular;
         end
     end
     
@@ -91,7 +91,6 @@ module matrix_calc #(
         WAIT_START,
         COMPUTE,
         SEND,
-        DONE_WAIT,
         RX_ERR
     } state_t;
 
@@ -114,7 +113,8 @@ module matrix_calc #(
                 else if (rx_err_i)                         next_state = RX_ERR;
                 else if (flush)                            next_state = IDLE;
             WAIT_START:
-                if (start)                                 next_state = COMPUTE;
+                if (flush)                                 next_state = IDLE;
+                else if (start)                            next_state = COMPUTE;
             COMPUTE:
                 if (calc_done || (op != 2'b11))            next_state = SEND;
             SEND:
@@ -125,9 +125,11 @@ module matrix_calc #(
         endcase
     end
     
-    assign flush_rx = (state == IDLE);
-    assign send     = (state == SEND);
-    assign set_calc_status = (state == SEND) && (op != 2'b10);
+    assign flush_rx = (next_state == IDLE);
+    assign send     = (state == COMPUTE) && (next_state == SEND);
+
+    assign set_calc_status = (state == COMPUTE) && (next_state == SEND) && (op != 2'b10);
+    assign det_calc_start  = (state == WAIT_START) && start && op;
 
    ////////////////////////////////////////////////////////
 
@@ -144,6 +146,7 @@ module matrix_calc #(
         .pslverr    (pslverr   ),
         .op         (op        ),
         .start      (start     ),
+        .flush      (flush     ),
         .done_i     (done_i    ),
         .busy_i     (busy_i    ),
         .overflow_i (overflow_i),
@@ -198,21 +201,21 @@ module matrix_calc #(
         .N      (N),
         .DATA_W (DATA_W)
     ) u_mat_transpose (
-        .mat_a (mat_a            ),
-        .mat_c (mat_transpose_res)
+        .mat_a   (mat_a            ),
+        .mat_c   (mat_transpose_res)
     );
 
     mat_det #(
         .N        (N),
         .DATA_W   (DATA_W)
     ) u_mat_det (
-        .clk       (clk         ),
-        .rst_n     (rst_n       ),
-        .mat_a     (mat_a       ),
-        .det       (det         ),
-        .start     (op && start ),
-        .singular  (det_singular),
-        .calc_done (calc_done   )
+        .clk       (clk           ),
+        .rst_n     (rst_n         ),
+        .mat_a     (mat_a         ),
+        .det       (det           ),
+        .start     (det_calc_start),
+        .singular  (det_singular  ),
+        .calc_done (calc_done     )
     );
 
     axis_tx #(

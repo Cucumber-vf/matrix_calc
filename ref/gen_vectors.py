@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+# For seed = 42
+# Тест 0: нулевая матрица (singular)
+# Overflow-тесты (индексы 1..9): [np.int64(1), np.int64(2), np.int64(6), np.int64(8), np.int64(9)]
+
 #!/usr/bin/env python3
 import numpy as np
 import sympy as sp
@@ -14,11 +17,29 @@ def gen_vectors(fname="vectors.dat", N=4, DATA_W=16, TESTS=10):
     # Диапазон, гарантирующий отсутствие переполнения при сложении/вычитании
     SAFE_LO, SAFE_HI = -10000, 10000
 
+    # ============================================================
+    # Случайный выбор индексов тестов с полным диапазоном
+    # Оставляем ~40% тестов в безопасном диапазоне для баланса
+    # Тест 0 всегда будет с нулевой матрицей (не входит в выборку)
+    # ============================================================
+    if TESTS > 1:
+        overflow_tests = set(np.random.choice(range(1, TESTS), size=int((TESTS-1) * 0.6), replace=False))
+    else:
+        overflow_tests = set()
+
     with open(fname, 'w') as f:
         for t in range(TESTS):
-            # Первые 5 тестов: полный диапазон (возможно переполнение)
-            # Следующие 5 тестов: безопасный диапазон (гарантированно без переполнения)
-            if t < 5:
+            # ========================================================
+            # Тест 0 — всегда нулевая матрица для проверки SINGULAR
+            # ========================================================
+            if t == 0:
+                A = np.zeros((N, N), dtype=np.int64)
+                B = np.zeros((N, N), dtype=np.int64)
+            # ========================================================
+            # Если тест помечен как overflow — полный диапазон,
+            # иначе — безопасный диапазон (гарантированно без переполнения)
+            # ========================================================
+            elif t in overflow_tests:
                 A = np.random.randint(lo, hi + 1, (N, N), dtype=np.int64)
                 B = np.random.randint(lo, hi + 1, (N, N), dtype=np.int64)
             else:
@@ -48,9 +69,10 @@ def gen_vectors(fname="vectors.dat", N=4, DATA_W=16, TESTS=10):
             f.write(line)
 
         print(f"Сгенерировано {TESTS} тестов → {fname}")
+        print(f"Тест 0: нулевая матрица (singular)")
+        if TESTS > 1:
+            print(f"Overflow-тесты (индексы 1..{TESTS-1}): {sorted(overflow_tests)}")
 
 if __name__ == "__main__":
     gen_vectors()
-
-
     

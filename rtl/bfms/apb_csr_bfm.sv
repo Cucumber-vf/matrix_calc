@@ -1,5 +1,3 @@
-import apb_package::* ;
-
 interface apb_csr_bfm (input clk, input rst_n);
 
     // APB_if
