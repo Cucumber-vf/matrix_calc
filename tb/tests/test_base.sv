@@ -2,19 +2,19 @@ class test_base extends uvm_test;
     
     `uvm_component_utils(test_base)
 
-    matrix_calc_env env;
+    matrix_calc_env    env;
 
-    env_config env_cfg;
+    env_config         env_cfg;
 
-    vectors_db_t vec_db;
-    regs_model ref_regs;
+    vectors_db_t       vec_db;
+    regs_model         ref_regs;
 
-    clk_config clk_cfg;
-    rst_config rst_cfg;
-    apb_config apb_cfg;
+    clk_config         clk_cfg;
+    rst_config         rst_cfg;
+    apb_config         apb_cfg;
     axis_master_config axis_m_a_cfg;
     axis_master_config axis_m_b_cfg;
-    axis_slave_config axis_s_cfg;
+    axis_slave_config  axis_s_cfg;
 
     function new (string name = "test_base", uvm_component parent = null);
         super.new(name, parent);
@@ -106,8 +106,8 @@ class test_base extends uvm_test;
     // =========================== 
 
     function void init_vseq (top_vseq_base_t vseq);
-        vseq.rst_sqr = env.rst_m.rst_sqr;
-        vseq.apb_sqr = env.apb_m.apb_sqr;
+        vseq.rst_sqr      = env.rst_m.rst_sqr;
+        vseq.apb_sqr      = env.apb_m.apb_sqr;
         vseq.axis_m_sqr_a = env.axis_m_a.axis_m_sqr;
         vseq.axis_m_sqr_b = env.axis_m_b.axis_m_sqr;
     endfunction
@@ -117,11 +117,11 @@ class test_base extends uvm_test;
     // ===========================                
     virtual function void configure_clk_agent (clk_config clk_cfg);
         clk_cfg.create_clk_agent = 1;
-        clk_cfg.period = 10;
+        clk_cfg.period           = 10;
     endfunction
 
     virtual function void configure_rst_agent (rst_config rst_cfg);
-        rst_cfg.active = UVM_ACTIVE;
+        rst_cfg.active       = UVM_ACTIVE;
         rst_cfg.min_duration = 10;
         rst_cfg.max_duration = 50;
     endfunction
@@ -131,18 +131,18 @@ class test_base extends uvm_test;
     endfunction
 
     virtual function void configure_axis_master (axis_master_config axis_m_cfg);
-        axis_m_cfg.active = UVM_ACTIVE;
-        axis_m_cfg.min_txn_delay = 0;
-        axis_m_cfg.max_txn_delay = 5;
+        axis_m_cfg.active             = UVM_ACTIVE;
+        axis_m_cfg.min_txn_delay      = 0;
+        axis_m_cfg.max_txn_delay      = 5;
         axis_m_cfg.early_tlast_chance = 20;
     endfunction
 
     virtual function void configure_axis_slave (axis_slave_config axis_m_cfg);
-        axis_s_cfg.min_active_dur = 0;
-        axis_s_cfg.max_active_dur = 5;
+        axis_s_cfg.min_active_dur   = 0;
+        axis_s_cfg.max_active_dur   = 5;
         axis_s_cfg.min_inactive_dur = 0;
         axis_s_cfg.max_inactive_dur = 5;
-        axis_s_cfg.tready_policy = TOGGLE;
+        axis_s_cfg.tready_policy    = TOGGLE;
     endfunction
 
 endclass
