@@ -17,36 +17,36 @@ module tb_top;
     // BFMs
     // =========================== 
 
-    clk_bfm         clk_drv_bfm (clk);
-    rst_driver_bfm  rst_drv_bfm (rst_n);
-    rst_monitor_bfm rst_mon_bfm (rst_n);
+    clk_bfm                clk_drv_bfm      (clk                  );
+    rst_driver_bfm         rst_drv_bfm      (rst_n                );
+    rst_monitor_bfm        rst_mon_bfm      (rst_n                );
 
-    apb_driver_bfm  apb_drv_bfm (apb_intf.master);
-    apb_monitor_bfm apb_mon_bfm (apb_intf.monitor);
+    apb_driver_bfm         apb_drv_bfm      (apb_intf.master      );
+    apb_monitor_bfm        apb_mon_bfm      (apb_intf.monitor     );
 
-    axis_master_driver_bfm axis_m_a_drv_bfm (axis_a_intf.master);
-    axis_monitor_bfm axis_m_a_mon_bfm (axis_a_intf.monitor);
+    axis_master_driver_bfm axis_m_a_drv_bfm (axis_a_intf.master   );
+    axis_monitor_bfm       axis_m_a_mon_bfm (axis_a_intf.monitor  );
 
-    axis_master_driver_bfm axis_m_b_drv_bfm (axis_b_intf.master);
-    axis_monitor_bfm axis_m_b_mon_bfm (axis_b_intf.monitor);
+    axis_master_driver_bfm axis_m_b_drv_bfm (axis_b_intf.master   );
+    axis_monitor_bfm       axis_m_b_mon_bfm (axis_b_intf.monitor  );
 
-    axis_slave_driver_bfm axis_s_drv_bfm (axis_res_intf.slave);
-    axis_monitor_bfm axis_s_mon_bfm (axis_res_intf.monitor);
+    axis_slave_driver_bfm  axis_s_drv_bfm   (axis_res_intf.slave  );
+    axis_monitor_bfm       axis_s_mon_bfm   (axis_res_intf.monitor);
 
     // ===========================
     // DUT
     // =========================== 
 
     matrix_calc_wrapper #(
-        .N      (TEST::N),
+        .N      (TEST::N     ),
         .DATA_W (AXIS::DATA_W)
     ) dut_wrapped (
-        .clk           (clk),
-        .rst_n         (rst_n),
+        .clk           (clk                 ),
+        .rst_n         (rst_n               ),
 
-        .apb_intf      (apb_intf.slave),
-        .axis_a_intf   (axis_a_intf.slave),
-        .axis_b_intf   (axis_b_intf.slave),
+        .apb_intf      (apb_intf.slave      ),
+        .axis_a_intf   (axis_a_intf.slave   ),
+        .axis_b_intf   (axis_b_intf.slave   ),
         .axis_res_intf (axis_res_intf.master)
     );
 
@@ -55,21 +55,21 @@ module tb_top;
     // =========================== 
 
     initial begin
-        uvm_config_db#(virtual clk_bfm)::set(null, "uvm_test_top", "clk_drv_bfm", clk_drv_bfm);
-        uvm_config_db#(virtual rst_driver_bfm)::set(null, "uvm_test_top", "rst_drv_bfm", rst_drv_bfm);
-        uvm_config_db#(virtual rst_monitor_bfm)::set(null, "uvm_test_top", "rst_mon_bfm", rst_mon_bfm);
+        uvm_config_db#(virtual clk_bfm               )::set(null, "uvm_test_top", "clk_drv_bfm",      clk_drv_bfm     );
+        uvm_config_db#(virtual rst_driver_bfm        )::set(null, "uvm_test_top", "rst_drv_bfm",      rst_drv_bfm     );
+        uvm_config_db#(virtual rst_monitor_bfm       )::set(null, "uvm_test_top", "rst_mon_bfm",      rst_mon_bfm     );
 
-        uvm_config_db#(virtual apb_driver_bfm)::set(null, "uvm_test_top", "apb_drv_bfm", apb_drv_bfm);
-        uvm_config_db#(virtual apb_monitor_bfm)::set(null, "uvm_test_top", "apb_mon_bfm", apb_mon_bfm);
+        uvm_config_db#(virtual apb_driver_bfm        )::set(null, "uvm_test_top", "apb_drv_bfm",      apb_drv_bfm     );
+        uvm_config_db#(virtual apb_monitor_bfm       )::set(null, "uvm_test_top", "apb_mon_bfm",      apb_mon_bfm     );
 
         uvm_config_db#(virtual axis_master_driver_bfm)::set(null, "uvm_test_top", "axis_m_a_drv_bfm", axis_m_a_drv_bfm);
-        uvm_config_db#(virtual axis_monitor_bfm)::set(null, "uvm_test_top", "axis_m_a_mon_bfm", axis_m_a_mon_bfm);
+        uvm_config_db#(virtual axis_monitor_bfm      )::set(null, "uvm_test_top", "axis_m_a_mon_bfm", axis_m_a_mon_bfm);
 
         uvm_config_db#(virtual axis_master_driver_bfm)::set(null, "uvm_test_top", "axis_m_b_drv_bfm", axis_m_b_drv_bfm);
-        uvm_config_db#(virtual axis_monitor_bfm)::set(null, "uvm_test_top", "axis_m_b_mon_bfm", axis_m_b_mon_bfm);
+        uvm_config_db#(virtual axis_monitor_bfm      )::set(null, "uvm_test_top", "axis_m_b_mon_bfm", axis_m_b_mon_bfm);
 
-        uvm_config_db#(virtual axis_slave_driver_bfm)::set(null, "uvm_test_top", "axis_s_drv_bfm", axis_s_drv_bfm);
-        uvm_config_db#(virtual axis_monitor_bfm)::set(null, "uvm_test_top", "axis_s_mon_bfm", axis_s_mon_bfm);
+        uvm_config_db#(virtual axis_slave_driver_bfm )::set(null, "uvm_test_top", "axis_s_drv_bfm",   axis_s_drv_bfm  );
+        uvm_config_db#(virtual axis_monitor_bfm      )::set(null, "uvm_test_top", "axis_s_mon_bfm",   axis_s_mon_bfm  );
     end
 
     initial begin
