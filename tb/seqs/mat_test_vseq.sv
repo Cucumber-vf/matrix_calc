@@ -4,7 +4,7 @@ class mat_test_vseq #(parameter int N = 4, parameter int DATA_W = 16) extends to
 
     const string report_id = "mat_test_vseq";
     // =================================== //
-    localparam int NUM_RANDOM_VECTORS = 3; // Set the number of random vectors for operation
+    localparam int NUM_RANDOM_VECTORS = 8; // Set the number of random vectors for operation
     // =================================== //
 
     bit add_disable;

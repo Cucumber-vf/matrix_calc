@@ -551,7 +551,7 @@ class matrix_calc_scrb #(parameter N = 4, parameter DATA_W = 16) extends uvm_sco
             (num_errors == 0) ? UVM_LOW : UVM_NONE)
  
         if (num_errors != 0)
-            `uvm_error("SCRB", $sformatf("Скорборд завершился с %0d ошибками", num_errors))
+            `uvm_error("SCRB", $sformatf("Scoreboard finished with %0d errors", num_errors))
     endfunction
  
 endclass

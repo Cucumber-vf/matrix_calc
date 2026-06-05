@@ -24,8 +24,10 @@ interface axis_slave_driver_bfm (axis_if intf);
                     end
                 endcase
             end
-        join_none
-        wait(~intf.rst_n);
+            begin
+                wait(~intf.rst_n);
+            end
+        join_any
         disable fork;
         intf.tready <= 0;
         wait( intf.rst_n);

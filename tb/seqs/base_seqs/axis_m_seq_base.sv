@@ -10,8 +10,7 @@ class axis_m_seq_base #(parameter DATA_W = 16) extends uvm_sequence #(axis_m_drv
     rand int                         delay;
 
     constraint c_delay {
-        delay >= axis_m_cfg.min_txn_delay;
-        delay <= axis_m_cfg.max_txn_delay;
+        delay inside {[axis_m_cfg.min_txn_delay:axis_m_cfg.max_txn_delay]};
     }
 
     constraint c_is_last {
