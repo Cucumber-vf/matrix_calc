@@ -18,9 +18,7 @@ module axis_rx #(
 );
     
     localparam W_COL_ROW_CNT = $clog2(N);
-
     localparam TOTAL         = N * N;
-    localparam W_CNT         = $clog2(TOTAL);
  
     typedef enum logic [1:0] {
         IDLE,
@@ -31,7 +29,8 @@ module axis_rx #(
     state_t state, next_state;
 
     logic [W_COL_ROW_CNT - 1:0] row_cnt, col_cnt;
-    logic [W_CNT         - 1:0] cnt;
+    
+    logic [8:0] cnt;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
@@ -67,7 +66,7 @@ module axis_rx #(
                 if (s_tvalid && s_tlast) begin
                     if (cnt == TOTAL - 1) next_state = BUSY;
                     else                  next_state = RX_ERR;
-                end
+                end 
             BUSY: 
                 if (flush) next_state = IDLE;
             RX_ERR:

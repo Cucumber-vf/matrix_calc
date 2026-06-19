@@ -1,5 +1,3 @@
-import apb_package::* ;
-
 module apb_csr (
     input  logic        clk,
     input  logic        rst_n, 
@@ -18,15 +16,20 @@ module apb_csr (
     output logic        start,
     output logic        flush,
     
-    input  logic        done_i,
     input  logic        busy_i,
     input  logic        overflow_i,
     input  logic        singular_i,
     input  logic        rx_err_i
 );
     
-    assign pready  = 1'b1;
-    assign pslverr = psel && penable && ( !(paddr inside {valid_addresses}) || (pwrite && paddr == 8'h08) ); //
+    typedef enum logic [7:0] {
+        REG_OP     = 8'h00,
+        REG_CTRL   = 8'h04,
+        REG_STATUS = 8'h08
+    } e_regs_addresses;
+    
+    assign pready  = rst_n ? 1'b1 : 1'b0;
+    assign pslverr = psel && penable && ( !(paddr inside {REG_OP, REG_CTRL, REG_STATUS}) || (pwrite && paddr == 8'h08) );
     
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
@@ -49,14 +52,13 @@ module apb_csr (
     end
 
     always_comb begin
-        prdata = '0;
+        prdata = 'x;
 
         if (psel && penable && ~pwrite) begin
             case (paddr)
                 REG_OP     :  prdata = op;
                 REG_CTRL   :  prdata = {flush, start};
-                REG_STATUS :  prdata = {rx_err_i, singular_i, overflow_i, busy_i, done_i};
-                default: prdata = '0;
+                REG_STATUS :  prdata = {rx_err_i, singular_i, overflow_i, busy_i};
             endcase
         end
     end
