@@ -25,13 +25,17 @@ interface apb_driver_bfm (apb_if intf);
         if (item.pwrite) begin
             intf.pwdata  <= item.pwdata;
         end
+
         @(posedge intf.clk);
         intf.penable <= 1;
+
+        #1;
+        item.prdata  = intf.prdata;
+        item.pslverr = intf.pslverr;
+
         do begin
             @(posedge intf.clk);
         end while (~intf.pready);
-        item.prdata  = intf.prdata;
-        item.pslverr = intf.pslverr;
         intf.penable <= 0;
         intf.psel    <= 0;
     endtask
@@ -42,8 +46,6 @@ interface apb_driver_bfm (apb_if intf);
             wait_reset();
         join_any
         disable fork;
-        item.prdata  = intf.prdata;
-        item.pslverr = intf.pslverr;
     endtask
 
 endinterface

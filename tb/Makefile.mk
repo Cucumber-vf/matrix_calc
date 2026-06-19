@@ -5,7 +5,7 @@ TB_HOME             := ${UVM_HOME}/tb
 UVM_TEST            ?= mat_test
 NAME_TOP_MODULE     := tb_top
 MAIN_SOURCE_FILE    := ${TB_HOME}/tb_sources.sv
-RUN_OPTS            ?= +add_disable +transpose_disable
+RUN_OPTS            ?= 
 COMPILE_OPTS        ?= 
 export VENDOR := CADENCE
 ifeq (${VENDOR}, CADENCE)

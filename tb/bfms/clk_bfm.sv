@@ -11,4 +11,8 @@ interface clk_bfm (output bit clk);
         end
     endtask
 
+    task automatic wait_for_clock (int n = 1);
+        repeat (n) @(posedge clk);
+    endtask
+
 endinterface

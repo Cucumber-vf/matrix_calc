@@ -9,6 +9,8 @@ package axis_slave_pkg;
    
    `include "axis_slave_config.sv"
    `include "axis_slave_driver.sv"
+   `include "axis_slave_tvalid_seq_item.sv"
+   `include "axis_slave_tvalid_monitor.sv"
    `include "axis_slave_agent.sv"
 
 endpackage

@@ -16,7 +16,6 @@ module apb_csr (
     output logic        start,
     output logic        flush,
     
-    input  logic        done_i,
     input  logic        busy_i,
     input  logic        overflow_i,
     input  logic        singular_i,
@@ -53,13 +52,13 @@ module apb_csr (
     end
 
     always_comb begin
-        prdata = '0;
+        prdata = 'x;
 
         if (psel && penable && ~pwrite) begin
             case (paddr)
                 REG_OP     :  prdata = op;
                 REG_CTRL   :  prdata = {flush, start};
-                REG_STATUS :  prdata = {rx_err_i, singular_i, overflow_i, busy_i, done_i};
+                REG_STATUS :  prdata = {rx_err_i, singular_i, overflow_i, busy_i};
             endcase
         end
     end

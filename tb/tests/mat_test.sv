@@ -35,10 +35,4 @@ class mat_test extends test_base;
         phase.drop_objection(this, "MAT_TEST Finished");
     endtask
 
-    virtual function void configure_axis_slave (axis_slave_config axis_m_cfg);
-        super.configure_axis_slave(axis_m_cfg);
-        axis_s_cfg.min_inactive_dur = 5;
-        axis_s_cfg.max_inactive_dur = 10;
-    endfunction
-
 endclass

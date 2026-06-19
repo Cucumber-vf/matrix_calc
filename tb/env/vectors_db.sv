@@ -67,7 +67,6 @@ class vectors_db #(parameter N = 4, parameter DATA_W = 16) extends uvm_object;
             return;
         end
         matrix = vec_A[test_id];
-        chan_a_test_id_q.push_back(test_id);
     endfunction
 
     function void get_input_B(int test_id, output logic signed [DATA_W-1:0] matrix[N][N]);
@@ -76,7 +75,6 @@ class vectors_db #(parameter N = 4, parameter DATA_W = 16) extends uvm_object;
             return;
         end
         matrix = vec_B[test_id];
-        chan_b_test_id_q.push_back(test_id);
     endfunction
 
     function int get_tests_num();
@@ -118,7 +116,7 @@ class vectors_db #(parameter N = 4, parameter DATA_W = 16) extends uvm_object;
         return exp_res_det[test_id];
     endfunction
 
-    // queue
+    // Queues
     function void clear_queues();
         chan_a_test_id_q.delete();
         chan_b_test_id_q.delete();
@@ -146,16 +144,6 @@ class vectors_db #(parameter N = 4, parameter DATA_W = 16) extends uvm_object;
     function int pop_chan_b();
         if (chan_b_test_id_q.size() == 0) return -1;
         return chan_b_test_id_q.pop_front();
-    endfunction
-
-    function int peek_chan_a();
-        if (chan_a_test_id_q.size() == 0) return -1;
-        return chan_a_test_id_q[0];
-    endfunction
-
-    function int peek_chan_b();
-        if (chan_b_test_id_q.size() == 0) return -1;
-        return chan_b_test_id_q[0];
     endfunction
 
 endclass

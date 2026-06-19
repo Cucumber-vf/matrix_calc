@@ -4,7 +4,7 @@ class reg_test_vseq #(parameter int N = 4, parameter int DATA_W = 16) extends to
 
     const string report_id = "reg_test_vseq";
     // =================================== //
-    localparam int INV_ADDR_TXNS_NUM = 10; // Set the number of wrong addresses read and write txns
+    localparam int INV_ADDR_TXNS_NUM = 10; 
     // =================================== //
     rst_start_seq rst_seq;
     apb_read_seq  apb_r_seq;

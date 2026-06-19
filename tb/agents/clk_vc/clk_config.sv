@@ -12,4 +12,8 @@ class clk_config extends uvm_object;
         super.new(name);
     endfunction
 
+    task wait_for_clock (int n = 1);
+        vbfm.wait_for_clock(n);
+    endtask
+
 endclass

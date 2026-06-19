@@ -4,6 +4,7 @@ class axis_seq_item #(parameter DATA_W = 16) extends uvm_sequence_item;
 
     rand logic signed [DATA_W - 1:0] tdata; 
     rand logic                       is_last;
+    rand int                         delay;
 
     function new (string name = "axis_seq_item");
         super.new(name);
@@ -18,12 +19,13 @@ class axis_seq_item #(parameter DATA_W = 16) extends uvm_sequence_item;
         super.do_copy(rhs);
         tdata   = rhs_.tdata;
         is_last = rhs_.is_last;
+        delay   = rhs_.delay;
     endfunction
 
     virtual function string convert2string();
         string s = super.convert2string();
-        s = $sformatf("%s\ntdata   : %0d (0x%0h)\nis_last : %0b", 
-                      s, tdata, tdata, is_last);
+        s = $sformatf("%s\ntdata   : %0d (0x%0h)\nis_last : %0b\ndelay   : %0d", 
+                      s, tdata, tdata, is_last, delay);
         return s;
     endfunction
 
@@ -31,17 +33,18 @@ class axis_seq_item #(parameter DATA_W = 16) extends uvm_sequence_item;
         $display(convert2string());
     endfunction
 
-    virtual function axis_m_drv_seq_item_s to_struct();
-        axis_m_drv_seq_item_s res;
+    virtual function axis_seq_item_s to_struct();
+        axis_seq_item_s res;
         res.tdata   = tdata;
         res.is_last = is_last;
-        res.delay   = 0;
+        res.delay   = delay;
         return res;
     endfunction
 
-    virtual function void from_struct(axis_m_drv_seq_item_s item);
+    virtual function void from_struct(axis_seq_item_s item);
         tdata   = item.tdata;
         is_last = item.is_last;
+        delay   = item.delay;
     endfunction
 
 endclass

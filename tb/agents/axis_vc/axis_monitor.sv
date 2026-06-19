@@ -5,6 +5,8 @@ class axis_monitor extends uvm_monitor;
     uvm_analysis_port #(axis_seq_item_t) axis_mon_ap;
     virtual axis_monitor_bfm vbfm;
     axis_config axis_cfg;
+
+    int clk_period;
     
     function new (string name = "axis_monitor", uvm_component parent);
         super.new(name, parent);
@@ -16,13 +18,14 @@ class axis_monitor extends uvm_monitor;
             `uvm_fatal("BUILD_PHASE", "No axis_cfg found for monitor")
         end
         vbfm = axis_cfg.mon_vbfm;
+        clk_period = axis_cfg.clk_period;
     endfunction
 
     task run_phase(uvm_phase phase);
         axis_seq_item mon_item;
-        axis_m_drv_seq_item_s bfm_item;
+        axis_seq_item_s bfm_item;
         forever begin
-            vbfm.wait_hs(bfm_item);
+            vbfm.wait_hs(clk_period, bfm_item);
             mon_item = axis_seq_item_t::type_id::create("mon_item", this);
             mon_item.from_struct(bfm_item);
             axis_mon_ap.write(mon_item);

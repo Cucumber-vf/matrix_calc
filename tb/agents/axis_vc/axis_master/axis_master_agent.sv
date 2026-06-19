@@ -3,10 +3,13 @@ class axis_master_agent extends uvm_agent;
     `uvm_component_utils(axis_master_agent)
 
     uvm_analysis_port #(axis_seq_item_t) axis_m_ap;
+    uvm_analysis_port #(axis_master_tready_seq_item) axis_m_tready_ap;
+
     axis_master_config axis_m_cfg;
     axis_master_driver axis_m_drv;
-    uvm_sequencer #(axis_m_drv_seq_item_t) axis_m_sqr;
+    uvm_sequencer #(axis_seq_item_t) axis_m_sqr;
     axis_monitor axis_m_mon;
+    axis_master_tready_monitor axis_m_tready_mon;
 
     function new (string name = "axis_master_agent", uvm_component parent = null);
         super.new(name, parent);
@@ -21,16 +24,25 @@ class axis_master_agent extends uvm_agent;
         axis_m_mon = axis_monitor::type_id::create("axis_m_mon", this);
         uvm_config_db #(axis_config)::set(this, "axis_m_mon", "axis_cfg", axis_m_cfg);
 
+        if (axis_m_cfg.has_tready_monitor) begin
+            axis_m_tready_ap = new("axis_m_tready_ap", this);
+            axis_m_tready_mon = axis_master_tready_monitor::type_id::create("axis_m_tready_mon", this);
+        end
+
         if (axis_m_cfg.active == UVM_ACTIVE) begin
             axis_m_drv = axis_master_driver::type_id::create("axis_m_drv", this);
-            axis_m_sqr = uvm_sequencer #(axis_m_drv_seq_item_t)::type_id::create("axis_m_sqr", this);
+            axis_m_sqr = uvm_sequencer #(axis_seq_item_t)::type_id::create("axis_m_sqr", this);
         end
     endfunction
 
     function void connect_phase (uvm_phase phase);
         axis_m_mon.axis_mon_ap.connect(axis_m_ap);
-        if (axis_m_cfg.active == UVM_ACTIVE)
+        if (axis_m_cfg.has_tready_monitor) begin
+            axis_m_tready_mon.axis_tready_mon_ap.connect(axis_m_tready_ap);
+        end
+        if (axis_m_cfg.active == UVM_ACTIVE) begin
             axis_m_drv.seq_item_port.connect(axis_m_sqr.seq_item_export);
+        end
     endfunction
 
 endclass

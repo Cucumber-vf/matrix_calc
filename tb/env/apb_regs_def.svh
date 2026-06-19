@@ -11,12 +11,11 @@ typedef enum logic [1:0] {
     DET       = 2'b11
 } opcodes_e;
 
-typedef enum bit [2:0] {
-    DONE     = 0,
-    BUSY     = 1,
-    OVERFLOW = 2,
-    SINGULAR = 3,
-    RX_ERR   = 4
+typedef enum bit [1:0] {
+    BUSY     = 0,
+    OVERFLOW = 1,
+    SINGULAR = 2,
+    RX_ERR   = 3
 } e_status_bits;
 
 typedef enum bit {

@@ -5,7 +5,7 @@ interface apb_monitor_bfm (apb_if intf);
     task wait_hs (output apb_seq_item_s item);
         forever begin
             @(posedge intf.clk);
-            if (intf.psel && intf.penable) begin
+            if (intf.psel && intf.penable && intf.pready) begin
                 item.paddr   = intf.paddr;
                 item.pwrite  = intf.pwrite;
                 item.pwdata  = intf.pwdata;

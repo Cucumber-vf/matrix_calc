@@ -1,4 +1,4 @@
-class axis_m_seq_base #(parameter DATA_W = 16) extends uvm_sequence #(axis_m_drv_seq_item #(DATA_W));
+class axis_m_seq_base #(parameter DATA_W = 16) extends uvm_sequence #(axis_seq_item #(DATA_W));
 
     `uvm_object_param_utils(axis_m_seq_base #(DATA_W))
 
@@ -23,7 +23,7 @@ class axis_m_seq_base #(parameter DATA_W = 16) extends uvm_sequence #(axis_m_drv
     endfunction
 
     virtual function void get_config();
-        if (!uvm_config_db #(axis_master_config)::get(null, "uvm_test_top.env.axis_m_a", "axis_m_cfg", axis_m_cfg)) begin
+        if (!uvm_config_db #(axis_master_config)::get(null, "uvm_test_top.env.axis_m0", "axis_m_cfg", axis_m_cfg)) begin
             `uvm_error("AXIS_M_SEQ", "Failed to get axis_master_config from config_db")
         end
         else begin

@@ -44,13 +44,27 @@ class regs_model extends uvm_object;
 
     function void write_to_reg (logic [7:0] addr, logic [31:0] wdata);
         if (addr inside {valid_addresses} && apb_regs[e_regs_addresses'(addr)].acces_type == RW) begin
-            apb_regs[e_regs_addresses'(addr)].value = wdata & apb_regs[e_regs_addresses'(addr)].valid_bits;
+            if ((addr == REG_OP) && apb_regs[REG_STATUS].value[BUSY]) begin
+                `uvm_info("REG_MODEL", "Write to REG_OP when BUSY ignored", UVM_MEDIUM)
+            end 
+            else begin
+                apb_regs[e_regs_addresses'(addr)].value = wdata & apb_regs[e_regs_addresses'(addr)].valid_bits;
+            end
+        end
+        else if (apb_regs[e_regs_addresses'(addr)].acces_type == RO) begin
+            `uvm_warning("REG_MODEL", "Write to RO register ignored")
+        end
+        else begin
+            `uvm_warning("REG_MODEL", $sformatf("Invalid addr=0x%02h for write", addr))
         end
     endfunction
 
     function void read_reg (logic [7:0] addr, output logic [31:0] rdata);
         if (addr inside {valid_addresses}) begin
             rdata = apb_regs[e_regs_addresses'(addr)].value;
+        end
+        else begin
+            `uvm_warning("REG_MODEL", $sformatf("Invalid addr=0x%02h for read", addr))
         end
     endfunction
 

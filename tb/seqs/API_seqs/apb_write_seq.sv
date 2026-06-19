@@ -26,7 +26,7 @@ class apb_write_seq extends apb_seq_base;
         })) `uvm_error(report_id, "Randomize Failed!")
 
         `uvm_info(report_id, 
-                  $sformatf("Start write with addr=0x%0h data=0x%0h", req.paddr, req.pwdata), UVM_MEDIUM)
+                  $sformatf("Start write with addr=0x%0h data=0x%0h", req.paddr, req.pwdata), UVM_HIGH)
         finish_item(req);
     endtask 
 

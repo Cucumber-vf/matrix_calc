@@ -12,7 +12,7 @@ class axis_m_send_seq #(parameter DATA_W = 16) extends axis_m_seq_base #(DATA_W)
         if (axis_m_cfg == null) get_config();
         if (!axis_m_cfg_ready) return;
 
-        req = axis_m_drv_seq_item #(DATA_W)::type_id::create("axis_req");
+        req = axis_seq_item #(DATA_W)::type_id::create("axis_req");
         start_item(req);
         
         if (!(req.randomize() with {
@@ -22,7 +22,7 @@ class axis_m_send_seq #(parameter DATA_W = 16) extends axis_m_seq_base #(DATA_W)
         })) `uvm_error(report_id, "Randomize Failed!")
         
         `uvm_info(report_id, $sformatf("Start AXIS txn: tdata=0x%0h, last=%0b, delay=%0d", 
-                                        req.tdata, req.is_last, req.delay), UVM_LOW)
+                                        req.tdata, req.is_last, req.delay), UVM_HIGH)
         finish_item(req);
     endtask
 

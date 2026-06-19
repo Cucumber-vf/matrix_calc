@@ -31,7 +31,6 @@
 `include "env/matrix_calc_env_pkg.sv"
 `include "seqs/seq_lib_pkg.sv"
 
-`include "tests/test_base_pkg.sv"
 `include "tests/tests_pkg.sv"
 
 //=====================

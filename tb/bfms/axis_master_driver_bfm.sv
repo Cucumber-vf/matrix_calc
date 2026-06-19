@@ -1,4 +1,4 @@
-import bfm_types_pkg::axis_m_drv_seq_item_s;
+import bfm_types_pkg::axis_seq_item_s;
 
 interface axis_master_driver_bfm (axis_if intf);
 
@@ -14,7 +14,7 @@ interface axis_master_driver_bfm (axis_if intf);
         axis_m_reset();
     endtask
 
-    task drive (axis_m_drv_seq_item_s item);
+    task drive (axis_seq_item_s item);
         repeat (item.delay) @(posedge intf.clk);
         intf.tvalid <= 1;
         intf.tdata  <= item.tdata;
@@ -26,7 +26,7 @@ interface axis_master_driver_bfm (axis_if intf);
         intf.tlast  <= 0;
     endtask
 
-    task drive_txn (axis_m_drv_seq_item_s item);
+    task drive_txn (axis_seq_item_s item);
         fork
             drive(item);
             wait_reset();

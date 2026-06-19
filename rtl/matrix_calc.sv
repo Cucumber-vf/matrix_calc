@@ -34,7 +34,6 @@ module matrix_calc #(
     logic [1:0]                 op;
     logic                       start;
     logic                       flush;
-    logic                       done_i;
     logic                       busy_i;
     logic                       overflow_i;
     logic                       singular_i;
@@ -66,7 +65,6 @@ module matrix_calc #(
     assign busy_i   = ~s_axis_a_tready || (~op[1] & ~s_axis_b_tready);
     assign rx_err_i = rx_err_a || (~op[1] & rx_err_b);
     assign res_mat  = op[1] ? mat_transpose_res : mat_addsub_res;
-    assign done_i   = m_axis_res_tvalid && m_axis_res_tlast;
 
     always_ff @(posedge clk) begin
         if (~rst_n) begin
@@ -147,7 +145,6 @@ module matrix_calc #(
         .op         (op        ),
         .start      (start     ),
         .flush      (flush     ),
-        .done_i     (done_i    ),
         .busy_i     (busy_i    ),
         .overflow_i (overflow_i),
         .singular_i (singular_i),

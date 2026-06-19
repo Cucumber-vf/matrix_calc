@@ -1,4 +1,4 @@
-class axis_master_driver extends uvm_driver #(axis_m_drv_seq_item_t);
+class axis_master_driver extends uvm_driver #(axis_seq_item_t);
 
     `uvm_component_utils(axis_master_driver)
 
@@ -17,7 +17,8 @@ class axis_master_driver extends uvm_driver #(axis_m_drv_seq_item_t);
     endfunction
 
     task run_phase (uvm_phase phase);
-        axis_m_drv_seq_item item;
+        axis_seq_item item;
+        vbfm.axis_m_reset();
         forever begin
             seq_item_port.get_next_item(item);
             vbfm.drive_txn(item.to_struct());

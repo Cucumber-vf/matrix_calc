@@ -18,6 +18,7 @@ class apb_driver extends uvm_driver #(apb_seq_item);
 
     task run_phase (uvm_phase phase);
         apb_seq_item item;
+        vbfm.apb_reset();
         forever begin
             seq_item_port.get_next_item(item);
             vbfm.drive_txn(item.to_struct());

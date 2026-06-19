@@ -12,8 +12,7 @@ class test_base extends uvm_test;
     clk_config         clk_cfg;
     rst_config         rst_cfg;
     apb_config         apb_cfg;
-    axis_master_config axis_m_a_cfg;
-    axis_master_config axis_m_b_cfg;
+    axis_master_config axis_m_cfg [2];
     axis_slave_config  axis_s_cfg;
 
     function new (string name = "test_base", uvm_component parent = null);
@@ -35,6 +34,7 @@ class test_base extends uvm_test;
         if (!uvm_config_db #(virtual clk_bfm)::get(this, "", "clk_drv_bfm", clk_cfg.vbfm)) begin
             `uvm_fatal("BUILD_PHASE", "No clk_bfm found for clk_cfg")
         end
+        clk_cfg.period = CLK_PERIOD;
         configure_clk_agent (clk_cfg);
         env_cfg.clk_cfg = clk_cfg;
 
@@ -58,25 +58,20 @@ class test_base extends uvm_test;
         configure_apb_agent (apb_cfg);
         env_cfg.apb_cfg = apb_cfg;
 
-        axis_m_a_cfg = axis_master_config::type_id::create("axis_m_a_cfg", this);
-        if (!uvm_config_db #(virtual axis_master_driver_bfm)::get(this, "", "axis_m_a_drv_bfm", axis_m_a_cfg.drv_vbfm)) begin
-            `uvm_fatal("BUILD_PHASE", "No axis_drv_bfm found for axis_m_a_cfg")
+        foreach (axis_m_cfg[i]) begin
+            axis_m_cfg[i] = axis_master_config::type_id::create($sformatf("axis_m%0d_cfg", i), this);
+            if (!uvm_config_db #(virtual axis_master_driver_bfm)::get(this, "", $sformatf("axis_m%0d_drv_bfm", i), 
+                                                                                    axis_m_cfg[i].drv_vbfm)) begin
+                `uvm_fatal("BUILD_PHASE", $sformatf("No axis_drv_bfm found for axis_m_cfg, axis_m%0d_drv_bfm", i))
+            end
+            if (!uvm_config_db #(virtual axis_monitor_bfm)::get(this, "", $sformatf("axis_m%0d_mon_bfm", i), 
+                                                                                    axis_m_cfg[i].mon_vbfm)) begin
+                `uvm_fatal("BUILD_PHASE", "No axis_mon_bfm found for axis_m_cfg")
+            end
+            axis_m_cfg[i].clk_period = CLK_PERIOD;
+            configure_axis_master (axis_m_cfg[i]);
+            env_cfg.axis_m_cfg[i] = axis_m_cfg[i];
         end
-        if (!uvm_config_db #(virtual axis_monitor_bfm)::get(this, "", "axis_m_a_mon_bfm", axis_m_a_cfg.mon_vbfm)) begin
-            `uvm_fatal("BUILD_PHASE", "No axis_mon_bfm found for axis_m_a_cfg")
-        end
-        configure_axis_master (axis_m_a_cfg);
-        env_cfg.axis_m_a_cfg = axis_m_a_cfg;
-
-        axis_m_b_cfg = axis_master_config::type_id::create("axis_m_b_cfg", this);
-        if (!uvm_config_db #(virtual axis_master_driver_bfm)::get(this, "", "axis_m_b_drv_bfm", axis_m_b_cfg.drv_vbfm)) begin
-            `uvm_fatal("BUILD_PHASE", "No axis_drv_bfm found for axis_m_b_cfg")
-        end
-        if (!uvm_config_db #(virtual axis_monitor_bfm)::get(this, "", "axis_m_b_mon_bfm", axis_m_b_cfg.mon_vbfm)) begin
-            `uvm_fatal("BUILD_PHASE", "No axis_mon_bfm found for axis_m_b_cfg")
-        end
-        configure_axis_master (axis_m_b_cfg);
-        env_cfg.axis_m_b_cfg = axis_m_b_cfg;
 
         axis_s_cfg = axis_slave_config::type_id::create("axis_s_cfg", this);
         if (!uvm_config_db #(virtual axis_slave_driver_bfm)::get(this, "", "axis_s_drv_bfm", axis_s_cfg.drv_vbfm)) begin
@@ -85,6 +80,7 @@ class test_base extends uvm_test;
         if (!uvm_config_db #(virtual axis_monitor_bfm)::get(this, "", "axis_s_mon_bfm", axis_s_cfg.mon_vbfm)) begin
             `uvm_fatal("BUILD_PHASE", "No axis_mon_bfm found for axis_s_cfg")
         end
+        axis_s_cfg.clk_period = CLK_PERIOD;
         configure_axis_slave (axis_s_cfg);
         env_cfg.axis_s_cfg = axis_s_cfg;
 
@@ -108,16 +104,16 @@ class test_base extends uvm_test;
     function void init_vseq (top_vseq_base_t vseq);
         vseq.rst_sqr      = env.rst_m.rst_sqr;
         vseq.apb_sqr      = env.apb_m.apb_sqr;
-        vseq.axis_m_sqr_a = env.axis_m_a.axis_m_sqr;
-        vseq.axis_m_sqr_b = env.axis_m_b.axis_m_sqr;
+        vseq.axis_m_sqr_a = env.axis_m[0].axis_m_sqr;
+        vseq.axis_m_sqr_b = env.axis_m[1].axis_m_sqr;
     endfunction
 
     // ===========================
     // Virtual configure functions
-    // ===========================                
+    // ===========================  
+                  
     virtual function void configure_clk_agent (clk_config clk_cfg);
         clk_cfg.create_clk_agent = 1;
-        clk_cfg.period           = 10;
     endfunction
 
     virtual function void configure_rst_agent (rst_config rst_cfg);
@@ -131,18 +127,20 @@ class test_base extends uvm_test;
     endfunction
 
     virtual function void configure_axis_master (axis_master_config axis_m_cfg);
+        axis_m_cfg.has_tready_monitor = 1;
         axis_m_cfg.active             = UVM_ACTIVE;
         axis_m_cfg.min_txn_delay      = 0;
         axis_m_cfg.max_txn_delay      = 5;
-        axis_m_cfg.early_tlast_chance = 20;
+        axis_m_cfg.early_tlast_chance = 5;
     endfunction
 
-    virtual function void configure_axis_slave (axis_slave_config axis_m_cfg);
-        axis_s_cfg.min_active_dur   = 0;
-        axis_s_cfg.max_active_dur   = 5;
-        axis_s_cfg.min_inactive_dur = 0;
-        axis_s_cfg.max_inactive_dur = 5;
-        axis_s_cfg.tready_policy    = TOGGLE;
+    virtual function void configure_axis_slave (axis_slave_config axis_s_cfg);
+        axis_s_cfg.has_tvalid_monitor = 1;
+        axis_s_cfg.min_active_dur     = 0;
+        axis_s_cfg.max_active_dur     = 5;
+        axis_s_cfg.min_inactive_dur   = 0;
+        axis_s_cfg.max_inactive_dur   = 5;
+        axis_s_cfg.tready_policy      = TOGGLE;
     endfunction
 
 endclass

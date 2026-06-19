@@ -6,7 +6,7 @@ package seq_lib_pkg;
     import tb_params_pkg::*;
 
     import apb_master_pkg::apb_seq_item;
-    import axis_master_pkg::axis_m_drv_seq_item;
+    import axis_master_pkg::axis_seq_item;
     import rst_agent_pkg::rst_seq_item;
 
     import axis_master_pkg::axis_master_config;
@@ -26,17 +26,18 @@ package seq_lib_pkg;
 
     // Work_seqs
     `include "work_seqs/axis_m_packet_send_seq.sv"
-    `include "work_seqs/matrix_calc_op_vseq.sv"
 
     // Vseqs
     `include "top_vseq_base.sv"
-    `include "test_vseq.sv"
     `include "reg_test_vseq.sv"
     `include "mat_test_vseq.sv"
+    `include "recv_features_test_vseq.sv"
+    `include "flush_and_rst_test_vseq.sv"
     
     typedef top_vseq_base #(TEST::N, AXIS::DATA_W) top_vseq_base_t;
-    typedef test_vseq #(TEST::N, AXIS::DATA_W) test_vseq_t;
     typedef reg_test_vseq #(TEST::N, AXIS::DATA_W) reg_test_vseq_t;
     typedef mat_test_vseq #(TEST::N, AXIS::DATA_W) mat_test_vseq_t;
+    typedef recv_features_test_vseq #(TEST::N, AXIS::DATA_W) recv_features_test_vseq_t;
+    typedef flush_and_rst_test_vseq #(TEST::N, AXIS::DATA_W) flush_and_rst_test_vseq_t;
 
 endpackage

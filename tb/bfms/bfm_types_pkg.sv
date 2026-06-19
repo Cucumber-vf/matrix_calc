@@ -16,7 +16,7 @@ package bfm_types_pkg;
         logic                             is_last;
 
         int                               delay;
-    } axis_m_drv_seq_item_s;
+    } axis_seq_item_s;
 
     typedef enum {ALWAYS_HIGH, TOGGLE} tready_policy_e;
 

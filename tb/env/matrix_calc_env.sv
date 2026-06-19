@@ -8,8 +8,7 @@ class matrix_calc_env extends uvm_env;
     rst_agent rst_m;
 
     apb_agent apb_m;
-    axis_master_agent axis_m_a;
-    axis_master_agent axis_m_b;
+    axis_master_agent axis_m [2];
     axis_slave_agent axis_s;
 
     matrix_calc_scrb_t scrb;
@@ -37,11 +36,10 @@ class matrix_calc_env extends uvm_env;
         apb_m = apb_agent::type_id::create("apb_m", this);
         uvm_config_db #(apb_config)::set(this, "apb_m*", "apb_cfg", env_cfg.apb_cfg);
 
-        axis_m_a = axis_master_agent::type_id::create("axis_m_a", this);
-        uvm_config_db #(axis_master_config)::set(this, "axis_m_a*", "axis_m_cfg", env_cfg.axis_m_a_cfg);
-
-        axis_m_b = axis_master_agent::type_id::create("axis_m_b", this);
-        uvm_config_db #(axis_master_config)::set(this, "axis_m_b*", "axis_m_cfg", env_cfg.axis_m_b_cfg);
+        foreach (axis_m[i]) begin
+            axis_m[i] = axis_master_agent::type_id::create($sformatf("axis_m%0d", i), this);
+            uvm_config_db #(axis_master_config)::set(this, $sformatf("axis_m%0d*", i), "axis_m_cfg", env_cfg.axis_m_cfg[i]);
+        end
 
         axis_s = axis_slave_agent::type_id::create("axis_s", this);
         uvm_config_db #(axis_slave_config)::set(this, "axis_s*", "axis_s_cfg", env_cfg.axis_s_cfg);
@@ -50,9 +48,14 @@ class matrix_calc_env extends uvm_env;
     function void connect_phase (uvm_phase phase);
         rst_m.rst_ap.connect(scrb.rst_exp);
         apb_m.apb_ap.connect(scrb.apb_exp);
-        axis_m_a.axis_m_ap.connect(scrb.axis_in_a_exp);
-        axis_m_b.axis_m_ap.connect(scrb.axis_in_b_exp);
+        foreach (axis_m[i]) begin
+            axis_m[i].axis_m_ap.connect(scrb.axis_in_exp[i]);
+            if (env_cfg.axis_m_cfg[i].has_tready_monitor)
+                axis_m[i].axis_m_tready_ap.connect(scrb.axis_in_tready_exp[i]);
+        end
         axis_s.axis_s_ap.connect(scrb.axis_out_exp);
+        if (env_cfg.axis_s_cfg.has_tvalid_monitor)
+            axis_s.axis_s_tvalid_ap.connect(scrb.axis_out_tvalid_exp);
     endfunction
 
 endclass
